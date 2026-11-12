@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { getDb } from '../db/connect.js';
+import { getSchedulesForTrip, getSchedulesForTripAndMonth } from '../controllers/schedules.js';
 
 const router = Router();
 
@@ -66,6 +67,78 @@ router.get('/:id', async (req, res, next) => {
     } catch (error) {
         return next(error);
     }
+});
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Schedule:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         tripId:
+ *           type: string
+ *           example: alpine-panorama
+ *         departureTime:
+ *           type: string
+ *           example: "08:30"
+ *         arrivalTime:
+ *           type: string
+ *           example: "13:00"
+ *         daysOfWeek:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: [monday, tuesday, wednesday]
+ *         status:
+ *           type: boolean
+ *           example: true
+ *
+ * /api/trips/{id}/schedules:
+ *   get:
+ *     summary: Get the schedules for a trip, optionally for one month
+ *     tags: [Schedules]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The trip ID
+ *         schema:
+ *           type: string
+ *           example: alpine-panorama
+ *       - in: query
+ *         name: month
+ *         required: false
+ *         description: Month number (1-12). Returns an empty list if the trip does not run that month.
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 12
+ *     responses:
+ *       200:
+ *         description: The schedules for the trip (an empty array if there are none)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Schedule'
+ *       400:
+ *         description: month is not a whole number from 1 to 12
+ *       404:
+ *         description: Trip not found
+ *       500:
+ *         description: Failed to fetch schedules
+ */
+router.get('/:id/schedules', (req, res) => {
+    if (req.query.month !== undefined) {
+        return getSchedulesForTripAndMonth(req, res);
+    }
+
+    return getSchedulesForTrip(req, res);
 });
 
 export default router;
