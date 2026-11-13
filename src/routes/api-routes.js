@@ -21,7 +21,7 @@ const router = Router();
  *       500:
  *         description: Failed to fetch trips
  */
-router.get('/', async (req, res, next) => {
+router.get('/trips', async (req, res, next) => {
     try {
         const trips = await getDb().collection('trips').find({}).toArray();
         return res.json(trips);
@@ -55,7 +55,7 @@ router.get('/', async (req, res, next) => {
  *       500:
  *         description: Failed to fetch trip
  */
-router.get('/:id', async (req, res, next) => {
+router.get('/trips/:id', async (req, res, next) => {
     try {
         const trip = await getDb().collection('trips').findOne({ id: req.params.id });
         if (!trip) {
