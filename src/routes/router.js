@@ -1,5 +1,5 @@
 import tripsEjsRouter from './ejs-routes.js';
-import apiTripsRouter from './api-routes.js';
+import apiRouter from './api-routes.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
 import { homePage, aboutPage, testErrorPage } from './index.js';
@@ -19,7 +19,7 @@ router.get('/trains', trainsPage);
 router.get('/api/trains', trainsApi);
 
 // Trips API
-router.use('/api/trips', apiTripsRouter);
+router.use('/api', apiRouter);
 
 // Rail trips
 router.use('/trips', tripsEjsRouter);
