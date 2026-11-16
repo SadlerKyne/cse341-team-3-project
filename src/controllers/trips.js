@@ -2,7 +2,6 @@ import {
   getTripById as findTripById,
   getAllTrips as findAllTrips,
 } from "../models/trips.js";
-import { getDb } from "../db/connect.js";
 
 export function listTripsPage(req, res) {
   return res.render('trips/list', {
@@ -57,8 +56,6 @@ export async function tripDetailsPage(req, res) {
       stack: ''
     });
   }
-
-  details.schedules = await getDb().collection('schedules').find({ tripId }).toArray();
 
   return res.render('trips/details', {
     title: 'Trip Details',
