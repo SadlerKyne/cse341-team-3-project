@@ -1,0 +1,45 @@
+<%- include('./partials/header') %>
+
+<section class="bookings-admin">
+    <h1><%= title %></h1>
+    <p>All bookings, newest first. This page loads its data from <code>/api/bookings</code>.</p>
+
+    <p class="bookings-state" id="bookings-loading">Loading bookings...</p>
+    <p class="bookings-state bookings-error" id="bookings-error" hidden></p>
+    <p class="bookings-state" id="bookings-empty" hidden>There are no bookings yet.</p>
+
+    <div class="bookings-table-wrap">
+        <table class="bookings-table" id="bookings-table" hidden>
+            <thead>
+                <tr>
+                    <th scope="col">Booking</th>
+                    <th scope="col">Booked on</th>
+                    <th scope="col">Trip</th>
+                    <th scope="col">Schedule</th>
+                    <th scope="col">Day</th>
+                    <th scope="col">Ticket class</th>
+                    <th scope="col">Passengers</th>
+                    <th scope="col">Contact email</th>
+                </tr>
+            </thead>
+            <tbody id="bookings-list"></tbody>
+        </table>
+    </div>
+
+    <template id="booking-row-template">
+        <tr>
+            <td><a data-field="id"></a></td>
+            <td data-field="created"></td>
+            <td data-field="trip"></td>
+            <td data-field="schedule"></td>
+            <td data-field="day"></td>
+            <td data-field="ticket-class"></td>
+            <td data-field="passengers"></td>
+            <td data-field="email"></td>
+        </tr>
+    </template>
+</section>
+
+<script src="/js/bookings-admin.js"></script>
+
+<%- include('./partials/footer') %>
