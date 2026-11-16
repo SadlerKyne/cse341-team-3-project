@@ -184,6 +184,17 @@ article.route-detail {
         .route-schedules {
             grid-area: schedules;
 
+            .schedule-month-filter {
+                display: flex;
+                align-items: center;
+                gap: var(--space-sm);
+                margin-bottom: var(--space-md);
+            }
+
+            .schedules-state {
+                margin-bottom: var(--space-md);
+            }
+
             .schedules-grid {
                 display: flex;
                 flex-direction: column;
