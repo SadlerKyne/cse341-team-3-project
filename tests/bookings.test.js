@@ -1,7 +1,27 @@
 import { describe, expect, test } from 'vitest';
 import request from 'supertest';
+import bcrypt from 'bcrypt';
 import app from '../app.js';
 import { getDb } from '../src/db/connect.js';
+import { Role } from '../src/models/schemas/roles.js';
+import { User } from '../src/models/schemas/users.js';
+
+const createAdminAgent = async () => {
+  const adminRole = await Role.findOne({ name: 'admin' });
+  await User.create({
+    name: 'Admin User',
+    email: 'admin@example.com',
+    passwordHash: await bcrypt.hash('admin-password', 12),
+    role: adminRole._id
+  });
+
+  const agent = request.agent(app);
+  await agent.post('/login').type('form').send({
+    email: 'admin@example.com',
+    password: 'admin-password'
+  });
+  return agent;
+};
 
 const validBooking = {
   scheduleId: '1',
@@ -15,8 +35,15 @@ const validBooking = {
 };
 
 describe('GET /api/bookings', () => {
-  test('returns an empty array when there are no bookings', async () => {
+  test('returns 401 for unauthenticated requests', async () => {
     const response = await request(app).get('/api/bookings');
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ message: 'Authentication required' });
+  });
+
+  test('returns an empty array to an admin when there are no bookings', async () => {
+    const response = await (await createAdminAgent()).get('/api/bookings');
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('application/json');
@@ -29,7 +56,7 @@ describe('GET /api/bookings', () => {
       { id: 'JRNEW', tripId: 'coastal-breeze', createdAt: new Date('2026-02-01') }
     ]);
 
-    const response = await request(app).get('/api/bookings');
+    const response = await (await createAdminAgent()).get('/api/bookings');
 
     expect(response.status).toBe(200);
     expect(response.body.map((booking) => booking.id)).toEqual(['JRNEW', 'JROLD']);
@@ -95,7 +122,7 @@ describe('booking pages', () => {
   });
 
   test('GET /bookings-admin renders the admin page', async () => {
-    const response = await request(app).get('/bookings-admin');
+    const response = await (await createAdminAgent()).get('/bookings-admin');
 
     expect(response.status).toBe(200);
     expect(response.text).toContain('Bookings Admin');
