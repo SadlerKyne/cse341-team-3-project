@@ -9,6 +9,10 @@ export async function getAllBookings() {
   return booking.find({}).sort({ createdAt: -1 }).lean();
 }
 
+export async function getBookingsByEmail(email) {
+  return booking.find({ "passengers.email": email }).sort({ createdAt: -1 }).lean();
+}
+
 export async function getBookingById(id) {
   return booking.findOne({ id }).lean();
 }

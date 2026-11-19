@@ -51,6 +51,7 @@ const login = async (req, res, next) => {
       req.session.user = {
         id: user._id.toString(),
         name: user.name,
+        email: user.email,
         role: user.role.name
       };
 
@@ -58,7 +59,7 @@ const login = async (req, res, next) => {
         if (saveError) {
           return next(saveError);
         }
-        return res.redirect('/');
+        return res.redirect(user.role.name === 'admin' ? '/admin' : '/dashboard');
       });
     });
   } catch (error) {

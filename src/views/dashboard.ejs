@@ -1,0 +1,25 @@
+<%- include('./partials/header') %>
+
+<section class="bookings-admin">
+    <h1>Welcome, <%= user.name %>!</h1>
+    <p><a href="/bookings-admin">Booking Admin</a> | <a href="/users-admin">User Admin</a></p>
+
+    <h2>My Bookings</h2>
+    <p id="my-bookings-message">Loading your bookings...</p>
+
+    <table class="bookings-table">
+        <thead>
+            <tr>
+                <th scope="col">Booking</th>
+                <th scope="col">Trip</th>
+                <th scope="col">Day</th>
+                <th scope="col">Ticket class</th>
+            </tr>
+        </thead>
+        <tbody id="my-bookings-list"></tbody>
+    </table>
+</section>
+
+<script src="/js/dashboard.js"></script>
+
+<%- include('./partials/footer') %>

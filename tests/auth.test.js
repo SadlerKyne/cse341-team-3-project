@@ -59,7 +59,7 @@ describe('POST /login and /logout', () => {
       .send({ email: credentials.email, password: credentials.password });
 
     expect(login.status).toBe(302);
-    expect(login.headers.location).toBe('/');
+    expect(login.headers.location).toBe('/dashboard');
 
     const logout = await agent.post('/logout');
     expect(logout.status).toBe(302);
