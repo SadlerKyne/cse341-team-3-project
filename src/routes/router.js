@@ -2,6 +2,7 @@ import tripsEjsRouter from './ejs-routes.js';
 import apiRouter from './api-routes.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
+import usersRouter from './users.js';
 import { homePage, aboutPage, loginPage, registerPage, testErrorPage } from './index.js';
 import { login, logout, register } from '../controllers/auth.js';
 import { getAllBookings, bookingsAdminPage } from '../controllers/bookings.js';
@@ -92,6 +93,9 @@ router.get('/bookings-admin', requirePageRole('admin'), bookingsAdminPage);
 
 // Rail trips
 router.use('/trips', tripsEjsRouter);
+
+// User admin page and API
+router.use(usersRouter);
 
 // Test 500 error page
 router.get('/500', testErrorPage);
