@@ -2,8 +2,10 @@ import tripsEjsRouter from './ejs-routes.js';
 import apiRouter from './api-routes.js';
 import { trainsApi, trainsPage } from './trains.js';
 import { Router } from 'express';
-import { homePage, aboutPage, testErrorPage } from './index.js';
+import { homePage, aboutPage, loginPage, registerPage, testErrorPage } from './index.js';
+import { login, logout, register } from '../controllers/auth.js';
 import { getAllBookings, bookingsAdminPage } from '../controllers/bookings.js';
+import { requireApiRole, requirePageRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -12,6 +14,13 @@ router.get('/', homePage);
 
 // About page
 router.get('/about', aboutPage);
+
+// Authentication pages
+router.get('/register', registerPage);
+router.get('/login', loginPage);
+router.post('/register', register);
+router.post('/login', login);
+router.post('/logout', logout);
 
 // Trains page
 router.get('/trains', trainsPage);
@@ -71,11 +80,15 @@ router.use('/api', apiRouter);
  *                     format: date-time
  *       500:
  *         description: Failed to fetch bookings
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
  */
-router.get('/api/bookings', getAllBookings);
+router.get('/api/bookings', requireApiRole('admin'), getAllBookings);
 
 // Bookings admin page
-router.get('/bookings-admin', bookingsAdminPage);
+router.get('/bookings-admin', requirePageRole('admin'), bookingsAdminPage);
 
 // Rail trips
 router.use('/trips', tripsEjsRouter);

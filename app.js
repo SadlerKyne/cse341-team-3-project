@@ -1,8 +1,11 @@
 import express from 'express';
+import session from 'express-session';
 import Path from 'path';
+import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'url';
 import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
+import { loadSessionUser } from './src/middleware/auth.js';
 import routes from './src/routes/router.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -25,6 +28,18 @@ app.set('views', Path.join(__dirname, 'src/views'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+app.use(session({
+    secret: process.env.SESSION_SECRET || randomBytes(32).toString('hex'),
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV?.toLowerCase() === 'production'
+    }
+}));
+
+app.use(loadSessionUser);
 app.use(globalMiddleware);
 app.use('/', routes);
 

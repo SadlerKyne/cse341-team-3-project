@@ -59,7 +59,7 @@ This repository is set up as a **GitHub template**. Use the template feature to 
    cd YOUR-REPO-NAME
    ```
 5. Install dependencies: `npm install`
-6. Copy `.env.example` to `.env` and set `MONGODB_URI` (and optionally `MONGODB_DB_NAME`) for your MongoDB instance.
+6. Configure `.env` with `MONGODB_URI` (and optionally `MONGODB_DB_NAME`) for your MongoDB instance. Set `SESSION_SECRET` to a persistent, random value outside local development.
 7. Import the starter data with `npm run db:import`. This replaces the starter collections and clears any bookings in that database.
 8. Run the automated tests with `npm test`. Tests use a temporary local database and do not change the database in your `.env` file.
 9. Start the development server: `npm run dev`
