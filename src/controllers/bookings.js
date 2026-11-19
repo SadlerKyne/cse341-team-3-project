@@ -5,12 +5,28 @@ import {
   createBooking,
   getAllBookings as findAllBookings,
   getBookingById,
+  getBookingsByEmail,
 } from "../models/bookings.js";
 
 // GET /api/bookings
 export async function getAllBookings(req, res) {
   try {
     const bookings = await findAllBookings();
+
+    return res.status(200).json(bookings);
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+
+    return res.status(500).json({
+      error: "Failed to fetch bookings",
+    });
+  }
+}
+
+// GET /api/bookings/mine
+export async function getMyBookings(req, res) {
+  try {
+    const bookings = await getBookingsByEmail(req.user.email);
 
     return res.status(200).json(bookings);
   } catch (error) {

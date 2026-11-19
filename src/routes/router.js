@@ -5,8 +5,9 @@ import { Router } from 'express';
 import usersRouter from './users.js';
 import { homePage, aboutPage, loginPage, registerPage, testErrorPage } from './index.js';
 import { login, logout, register } from '../controllers/auth.js';
-import { getAllBookings, bookingsAdminPage } from '../controllers/bookings.js';
-import { requireApiRole, requirePageRole } from '../middleware/auth.js';
+import { getAllBookings, getMyBookings, bookingsAdminPage } from '../controllers/bookings.js';
+import { adminDashboardPage, userDashboardPage } from '../controllers/dashboard.js';
+import { requireApiLogin, requireApiRole, requirePageLogin, requirePageRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -22,6 +23,10 @@ router.get('/login', loginPage);
 router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', logout);
+
+// Dashboards
+router.get('/dashboard', requirePageLogin, userDashboardPage);
+router.get('/admin', requirePageRole('admin'), adminDashboardPage);
 
 // Trains page
 router.get('/trains', trainsPage);
@@ -87,6 +92,22 @@ router.use('/api', apiRouter);
  *         description: Forbidden
  */
 router.get('/api/bookings', requireApiRole('admin'), getAllBookings);
+
+/**
+ * @swagger
+ * /api/bookings/mine:
+ *   get:
+ *     summary: Get bookings where the signed-in user's email matches a passenger
+ *     tags: [Bookings]
+ *     responses:
+ *       200:
+ *         description: The user's bookings, newest first
+ *       401:
+ *         description: Authentication required
+ *       500:
+ *         description: Failed to fetch bookings
+ */
+router.get('/api/bookings/mine', requireApiLogin, getMyBookings);
 
 // Bookings admin page
 router.get('/bookings-admin', requirePageRole('admin'), bookingsAdminPage);
