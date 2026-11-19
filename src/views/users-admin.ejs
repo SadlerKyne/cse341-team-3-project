@@ -1,0 +1,22 @@
+<%- include('./partials/header') %>
+
+<section class="bookings-admin" id="users-admin" data-current-user-id="<%= user.id %>" data-is-admin="<%= user.role === 'admin' %>">
+    <h1><%= title %></h1>
+    <p id="users-message">Loading users...</p>
+
+    <table class="bookings-table">
+        <thead>
+            <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Role</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="users-list"></tbody>
+    </table>
+</section>
+
+<script src="/js/users-admin.js"></script>
+
+<%- include('./partials/footer') %>
