@@ -10,6 +10,7 @@ const createAdminAgent = async () => {
   const adminRole = await Role.findOne({ name: 'admin' });
   await User.create({
     name: 'Admin User',
+    username: 'admin',
     email: 'admin@example.com',
     passwordHash: await bcrypt.hash('admin-password', 12),
     role: adminRole._id

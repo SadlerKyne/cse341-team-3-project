@@ -6,6 +6,7 @@ import { verifyPassword } from '../src/models/auth.js';
 
 const credentials = {
   name: 'Test User',
+  username: 'testuser',
   email: 'test.user@example.com',
   password: 'secure-test-password'
 };
@@ -19,6 +20,7 @@ describe('POST /register', () => {
 
     const user = await User.findOne({ email: credentials.email }).populate('role');
     expect(user.name).toBe(credentials.name);
+    expect(user.username).toBe(credentials.username);
     expect(user.role.name).toBe('customer');
     expect(user.passwordHash).not.toBe(credentials.password);
     expect(await verifyPassword(credentials.password, user.passwordHash)).toBe(true);
@@ -33,6 +35,17 @@ describe('POST /register', () => {
 
     expect(response.status).toBe(409);
     expect(response.text).toContain('An account with that email already exists.');
+  });
+
+  test('rejects duplicate usernames regardless of case', async () => {
+    await request(app).post('/register').type('form').send(credentials);
+    const response = await request(app)
+      .post('/register')
+      .type('form')
+      .send({ ...credentials, email: 'another@example.com', username: credentials.username.toUpperCase() });
+
+    expect(response.status).toBe(409);
+    expect(response.text).toContain('An account with that username already exists.');
   });
 });
 

@@ -75,11 +75,12 @@ const loadUsersAdmin = async () => {
                     button('Edit', () => { editingId = user.id; render(); }),
                     button('Delete', () => deleteUser(user.id))
                 );
-                row.append(cell(user.name), cell(user.email), cell(user.role), cell(actions));
+                row.append(cell(user.name), cell(user.username), cell(user.email), cell(user.role), cell(actions));
                 return row;
             }
 
             const nameInput = input(user.name);
+            const usernameInput = input(user.username);
             const emailInput = input(user.email);
             const roleInput = input(user.role);
             roleInput.disabled = !isAdmin;
@@ -88,13 +89,14 @@ const loadUsersAdmin = async () => {
             actions.append(
                 button('Save', () => saveUser(user.id, {
                     name: nameInput.value,
+                    username: usernameInput.value,
                     email: emailInput.value,
                     ...(isAdmin && { role: roleInput.value })
                 })),
                 // Nothing was sent to the API, so just show the list again.
                 button('Cancel', () => { editingId = null; render(); })
             );
-            row.append(cell(nameInput), cell(emailInput), cell(roleInput), cell(actions));
+            row.append(cell(nameInput), cell(usernameInput), cell(emailInput), cell(roleInput), cell(actions));
             return row;
         }));
     };

@@ -8,7 +8,14 @@ import { User } from '../src/models/schemas/users.js';
 
 const signIn = async (email, roleName) => {
   const role = await Role.findOne({ name: roleName });
-  await User.create({ name: 'Maya', email, passwordHash: await bcrypt.hash('password', 4), role: role._id });
+  const username = email.split('@')[0];
+  await User.create({
+    name: 'Maya',
+    username,
+    email,
+    passwordHash: await bcrypt.hash('password', 4),
+    role: role._id
+  });
   const agent = request.agent(app);
   const login = await agent.post('/login').type('form').send({ email, password: 'password' });
   return { agent, login };
@@ -41,7 +48,9 @@ describe('user dashboard and navigation', () => {
     const { agent, login } = await signIn('admin@example.com', 'admin');
 
     expect(login.headers.location).toBe('/admin');
-    expect((await agent.get('/admin')).status).toBe(200);
+    const dashboard = await agent.get('/admin');
+    expect(dashboard.status).toBe(200);
+    expect(dashboard.text).toContain('Welcome to the Admin Dashboard');
   });
 
   test('GET /api/bookings/mine returns only bookings with the user as a passenger', async () => {

@@ -5,9 +5,15 @@ import app from '../app.js';
 import { Role } from '../src/models/schemas/roles.js';
 import { User } from '../src/models/schemas/users.js';
 
-const createUser = async (name, email, roleName) => {
+const createUser = async (name, username, email, roleName) => {
   const role = await Role.findOne({ name: roleName });
-  const user = await User.create({ name, email, passwordHash: await bcrypt.hash('password', 4), role: role._id });
+  const user = await User.create({
+    name,
+    username,
+    email,
+    passwordHash: await bcrypt.hash('password', 4),
+    role: role._id
+  });
   return user._id.toString();
 };
 
@@ -27,29 +33,50 @@ describe('user admin', () => {
   });
 
   test('customers only see and edit themselves', async () => {
-    const mayaId = await createUser('Maya', 'maya@example.com', 'customer');
-    const kenId = await createUser('Ken', 'ken@example.com', 'customer');
+    const mayaId = await createUser('Maya', 'maya', 'maya@example.com', 'customer');
+    const kenId = await createUser('Ken', 'ken', 'ken@example.com', 'customer');
     const agent = await signIn('maya@example.com');
 
     expect((await agent.get('/users-admin')).status).toBe(200);
 
     const list = await agent.get('/api/users');
-    expect(list.body).toEqual([{ id: mayaId, name: 'Maya', email: 'maya@example.com', role: 'customer' }]);
+    expect(list.body).toEqual([{
+      id: mayaId,
+      name: 'Maya',
+      username: 'maya',
+      email: 'maya@example.com',
+      role: 'customer'
+    }]);
+    expect(list.body[0]).not.toHaveProperty('passwordHash');
 
-    const updateSelf = await agent.put(`/api/users/${mayaId}`).send({ name: 'Maya R', email: 'maya@example.com' });
+    const updateSelf = await agent.put(`/api/users/${mayaId}`).send({
+      name: 'Maya R',
+      username: 'maya-r',
+      email: 'maya@example.com'
+    });
     expect(updateSelf.status).toBe(200);
     expect(updateSelf.body.name).toBe('Maya R');
+    expect(updateSelf.body.username).toBe('maya-r');
 
-    const updateOther = await agent.put(`/api/users/${kenId}`).send({ name: 'Hacked', email: 'ken@example.com' });
+    const updateOther = await agent.put(`/api/users/${kenId}`).send({
+      name: 'Hacked',
+      username: 'hacked',
+      email: 'ken@example.com'
+    });
     const deleteOther = await agent.delete(`/api/users/${kenId}`);
-    const changeRole = await agent.put(`/api/users/${mayaId}`).send({ name: 'Maya', email: 'maya@example.com', role: 'admin' });
+    const changeRole = await agent.put(`/api/users/${mayaId}`).send({
+      name: 'Maya',
+      username: 'maya',
+      email: 'maya@example.com',
+      role: 'admin'
+    });
     expect(updateOther.status).toBe(403);
     expect(deleteOther.status).toBe(403);
     expect(changeRole.status).toBe(403);
   });
 
   test('customers can delete themselves and are signed out', async () => {
-    const mayaId = await createUser('Maya', 'maya@example.com', 'customer');
+    const mayaId = await createUser('Maya', 'maya', 'maya@example.com', 'customer');
     const agent = await signIn('maya@example.com');
 
     expect((await agent.delete(`/api/users/${mayaId}`)).status).toBe(204);
@@ -58,13 +85,18 @@ describe('user admin', () => {
   });
 
   test('admins see everyone and can update and delete any user', async () => {
-    await createUser('Admin', 'admin@example.com', 'admin');
-    const kenId = await createUser('Ken', 'ken@example.com', 'customer');
+    await createUser('Admin', 'admin', 'admin@example.com', 'admin');
+    const kenId = await createUser('Ken', 'ken', 'ken@example.com', 'customer');
     const agent = await signIn('admin@example.com');
 
     expect((await agent.get('/api/users')).body).toHaveLength(2);
 
-    const update = await agent.put(`/api/users/${kenId}`).send({ name: 'Ken', email: 'ken@example.com', role: 'admin' });
+    const update = await agent.put(`/api/users/${kenId}`).send({
+      name: 'Ken',
+      username: 'ken',
+      email: 'ken@example.com',
+      role: 'admin'
+    });
     expect(update.body.role).toBe('admin');
 
     expect((await agent.delete(`/api/users/${kenId}`)).status).toBe(204);
@@ -72,7 +104,7 @@ describe('user admin', () => {
   });
 
   test('returns 400 when name or email is missing', async () => {
-    const mayaId = await createUser('Maya', 'maya@example.com', 'customer');
+    const mayaId = await createUser('Maya', 'maya', 'maya@example.com', 'customer');
     const agent = await signIn('maya@example.com');
 
     expect((await agent.put(`/api/users/${mayaId}`).send({ name: '' })).status).toBe(400);
