@@ -12,18 +12,18 @@ const router = Router();
  *     tags: [Users]
  *     responses:
  *       200:
- *         description: A list of users (id, name, email, role)
+ *         description: A list of users (id, name, username, email, role). Password hashes are never returned.
  *       401:
  *         description: Authentication required
  * /api/users/{id}:
  *   put:
- *     summary: Update a user's name and email (admins can also change role). Users can only update themselves.
+ *     summary: Update a user's name, username, and email (admins can also change role). Users can only update themselves.
  *     tags: [Users]
  *     responses:
  *       200:
  *         description: The updated user
  *       400:
- *         description: Missing name or email, or invalid role
+ *         description: Missing name, username, or email, or invalid role
  *       401:
  *         description: Authentication required
  *       403:

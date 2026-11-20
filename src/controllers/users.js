@@ -27,31 +27,45 @@ export async function getUsers(req, res) {
 // PUT /api/users/:id
 export async function updateUser(req, res) {
   const { id } = req.params;
-  const { name, email, role } = req.body ?? {};
+  const { name, username, email, role } = req.body ?? {};
 
   if (!canManage(req, id) || (role && !isAdmin(req))) {
     return res.status(403).json({ message: 'Forbidden' });
   }
-  if (typeof name !== 'string' || !name.trim() || typeof email !== 'string' || !email.trim()) {
-    return res.status(400).json({ error: 'Name and email are required' });
+  if ([name, username, email].some((value) => typeof value !== 'string' || !value.trim())) {
+    return res.status(400).json({ error: 'Name, username, and email are required' });
   }
   if (role && !['customer', 'admin'].includes(role)) {
     return res.status(400).json({ error: 'Role must be customer or admin' });
   }
 
   try {
-    const user = await saveUser(id, { name: name.trim(), email: email.trim().toLowerCase(), role });
+    const user = await saveUser(id, {
+      name: name.trim(),
+      username: username.trim().toLowerCase(),
+      email: email.trim().toLowerCase(),
+      role
+    });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Keep the session up to date when users edit themselves.
     if (user.id === req.user.id) {
-      req.session.user = { ...req.session.user, name: user.name, email: user.email, role: user.role };
+      req.session.user = {
+        ...req.session.user,
+        name: user.name,
+        username: user.username,
+        email: user.email,
+        role: user.role
+      };
     }
 
     return res.status(200).json(user);
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ error: 'Username or email is already in use' });
+    }
     console.error('Error updating user:', error);
     return res.status(500).json({ error: 'Failed to update user' });
   }

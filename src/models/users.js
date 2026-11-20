@@ -6,6 +6,7 @@ import { User } from './schemas/users.js';
 const toPublicUser = (user) => ({
   id: user._id.toString(),
   name: user.name,
+  username: user.username,
   email: user.email,
   role: user.role?.name
 });
@@ -23,11 +24,11 @@ export async function getUserById(id) {
   return user ? toPublicUser(user) : null;
 }
 
-export async function updateUser(id, { name, email, role }) {
+export async function updateUser(id, { name, username, email, role }) {
   if (!mongoose.isValidObjectId(id)) {
     return null;
   }
-  const changes = { name, email };
+  const changes = { name, username, email };
   if (role) {
     changes.role = (await Role.findOne({ name: role }))._id;
   }
