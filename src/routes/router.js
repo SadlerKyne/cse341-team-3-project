@@ -41,49 +41,63 @@ router.use('/api', apiRouter);
  * @swagger
  * /api/bookings:
  *   get:
- *     summary: Get all bookings, newest first
+ *     summary: Get one page of bookings, sorted by booking date (newest first)
  *     tags: [Bookings]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
  *     responses:
  *       200:
- *         description: A list of bookings (an empty array if there are none)
+ *         description: One page of bookings (data is an empty array if there are none)
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 type: object
- *                 properties:
- *                   id:
- *                     type: string
- *                     example: JR1W5AFH9O
- *                   scheduleId:
- *                     type: integer
- *                     example: 1
- *                   tripId:
- *                     type: string
- *                     example: alpine-panorama
- *                   ticketClass:
- *                     type: string
- *                     example: premium
- *                   selectedDay:
- *                     type: string
- *                     example: monday
- *                   passengers:
- *                     type: array
- *                     items:
- *                       type: object
- *                       properties:
- *                         firstName:
- *                           type: string
- *                         lastName:
- *                           type: string
- *                         email:
- *                           type: string
- *                         phone:
- *                           type: string
- *                   createdAt:
- *                     type: string
- *                     format: date-time
+ *               type: object
+ *               properties:
+ *                 page: { type: integer, example: 1 }
+ *                 limit: { type: integer, example: 10 }
+ *                 total: { type: integer, example: 12 }
+ *                 totalPages: { type: integer, example: 2 }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: JR1W5AFH9O
+ *                       scheduleId:
+ *                         type: integer
+ *                         example: 1
+ *                       tripId:
+ *                         type: string
+ *                         example: alpine-panorama
+ *                       ticketClass:
+ *                         type: string
+ *                         example: premium
+ *                       selectedDay:
+ *                         type: string
+ *                         example: monday
+ *                       passengers:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             firstName:
+ *                               type: string
+ *                             lastName:
+ *                               type: string
+ *                             email:
+ *                               type: string
+ *                             phone:
+ *                               type: string
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
  *       500:
  *         description: Failed to fetch bookings
  *       401:

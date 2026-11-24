@@ -5,63 +5,86 @@ const loadBookingsAdmin = async () => {
     const loadingEl = document.getElementById('bookings-loading');
     const errorEl = document.getElementById('bookings-error');
     const emptyEl = document.getElementById('bookings-empty');
+    const prevEl = document.getElementById('bookings-prev');
+    const nextEl = document.getElementById('bookings-next');
+    const pageLabelEl = document.getElementById('bookings-page');
 
     if (!tableEl || !listEl || !templateEl) {
         return;
     }
 
+    let currentPage = 1;
+
     const formatLabel = (value) =>
         typeof value === 'string' && value ? value.charAt(0).toUpperCase() + value.slice(1) : '';
 
-    try {
-        const response = await fetch('/api/bookings');
-        if (!response.ok) {
-            throw new Error(`Failed to load bookings (${response.status})`);
+    // Fetches one page of bookings from the API and updates the table and pager.
+    const loadPage = async (page) => {
+        loadingEl.hidden = false;
+        errorEl.hidden = true;
+
+        try {
+            const response = await fetch(`/api/bookings?page=${page}`);
+            if (!response.ok) {
+                throw new Error(`Failed to load bookings (${response.status})`);
+            }
+
+            const result = await response.json();
+            if (!Array.isArray(result.data)) {
+                throw new Error('Bookings API returned an invalid response');
+            }
+            const bookings = result.data;
+
+            const fragment = document.createDocumentFragment();
+
+            bookings.forEach((booking) => {
+                const row = templateEl.content.cloneNode(true);
+                const setField = (field, value) => {
+                    row.querySelector(`[data-field="${field}"]`).textContent = value ?? '';
+                };
+                const passengers = Array.isArray(booking.passengers) ? booking.passengers : [];
+                const idLink = row.querySelector('[data-field="id"]');
+
+                idLink.textContent = booking.id;
+                idLink.href = `/trips/confirmation/${encodeURIComponent(booking.id)}`;
+
+                setField('created', booking.createdAt
+                    ? new Date(booking.createdAt).toLocaleString('en-US', {
+                        month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
+                    })
+                    : '');
+                setField('trip', booking.tripId);
+                setField('schedule', booking.scheduleId);
+                setField('day', formatLabel(booking.selectedDay));
+                setField('ticket-class', formatLabel(booking.ticketClass));
+                setField('passengers', passengers.length);
+                setField('email', passengers[0]?.email);
+
+                fragment.appendChild(row);
+            });
+
+            listEl.replaceChildren(fragment);
+            tableEl.hidden = bookings.length === 0;
+            emptyEl.hidden = bookings.length > 0;
+
+            currentPage = result.page;
+            const totalPages = Math.max(result.totalPages, 1);
+            pageLabelEl.textContent = `Page ${currentPage} of ${totalPages}`;
+            prevEl.disabled = currentPage <= 1;
+            nextEl.disabled = currentPage >= totalPages;
+        } catch (error) {
+            errorEl.hidden = false;
+            errorEl.textContent = 'Unable to load bookings right now. Please try again in a moment.';
+            console.error('Error loading bookings:', error);
+        } finally {
+            loadingEl.hidden = true;
         }
+    };
 
-        const bookings = await response.json();
-        if (!Array.isArray(bookings)) {
-            throw new Error('Bookings API returned an invalid response');
-        }
+    prevEl.addEventListener('click', () => loadPage(currentPage - 1));
+    nextEl.addEventListener('click', () => loadPage(currentPage + 1));
 
-        const fragment = document.createDocumentFragment();
-
-        bookings.forEach((booking) => {
-            const row = templateEl.content.cloneNode(true);
-            const setField = (field, value) => {
-                row.querySelector(`[data-field="${field}"]`).textContent = value ?? '';
-            };
-            const passengers = Array.isArray(booking.passengers) ? booking.passengers : [];
-            const idLink = row.querySelector('[data-field="id"]');
-
-            idLink.textContent = booking.id;
-            idLink.href = `/trips/confirmation/${encodeURIComponent(booking.id)}`;
-
-            setField('created', booking.createdAt
-                ? new Date(booking.createdAt).toLocaleString('en-US', {
-                    month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit'
-                })
-                : '');
-            setField('trip', booking.tripId);
-            setField('schedule', booking.scheduleId);
-            setField('day', formatLabel(booking.selectedDay));
-            setField('ticket-class', formatLabel(booking.ticketClass));
-            setField('passengers', passengers.length);
-            setField('email', passengers[0]?.email);
-
-            fragment.appendChild(row);
-        });
-
-        listEl.replaceChildren(fragment);
-        tableEl.hidden = bookings.length === 0;
-        emptyEl.hidden = bookings.length > 0;
-    } catch (error) {
-        errorEl.hidden = false;
-        errorEl.textContent = 'Unable to load bookings right now. Please try again in a moment.';
-        console.error('Error loading bookings:', error);
-    } finally {
-        loadingEl.hidden = true;
-    }
+    await loadPage(1);
 };
 
 document.addEventListener('DOMContentLoaded', loadBookingsAdmin);

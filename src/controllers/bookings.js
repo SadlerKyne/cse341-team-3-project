@@ -1,19 +1,26 @@
 import mongoose from "mongoose";
 import { getDb } from "../db/connect.js";
 import { generateConfirmationCode } from "../includes/helpers.js";
+import { parsePaging } from "../includes/pagination.js";
 import {
   createBooking,
-  getAllBookings as findAllBookings,
   getBookingById,
   getBookingsByEmail,
+  getBookingsPage,
 } from "../models/bookings.js";
 
 // GET /api/bookings
 export async function getAllBookings(req, res) {
-  try {
-    const bookings = await findAllBookings();
+  const paging = parsePaging(req.query);
+  if (paging.error) {
+    return res.status(400).json({ error: paging.error });
+  }
+  const { page, limit } = paging;
 
-    return res.status(200).json(bookings);
+  try {
+    const { bookings, total } = await getBookingsPage({}, page, limit);
+
+    return res.status(200).json({ data: bookings, page, limit, total, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     console.error("Error fetching bookings:", error);
 
