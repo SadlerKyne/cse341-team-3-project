@@ -4,6 +4,21 @@
     <h1><%= title %></h1>
     <p>All bookings, newest first. This page loads its data from <code>/api/bookings</code>.</p>
 
+    <form id="bookings-filters">
+        <label for="bookings-class">Ticket class</label>
+        <select id="bookings-class">
+            <option value="">All</option>
+            <option value="standard">Standard</option>
+            <option value="premium">Premium</option>
+            <option value="first">First</option>
+        </select>
+        <label for="bookings-from">From</label>
+        <input type="date" id="bookings-from">
+        <label for="bookings-to">To</label>
+        <input type="date" id="bookings-to">
+        <button type="submit">Filter</button>
+    </form>
+
     <p class="bookings-state" id="bookings-loading">Loading bookings...</p>
     <p class="bookings-state bookings-error" id="bookings-error" hidden></p>
     <p class="bookings-state" id="bookings-empty" hidden>There are no bookings yet.</p>

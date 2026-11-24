@@ -50,6 +50,17 @@ router.use('/api', apiRouter);
  *       - in: query
  *         name: limit
  *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+ *       - in: query
+ *         name: ticketClass
+ *         schema: { type: string, enum: [standard, premium, first] }
+ *       - in: query
+ *         name: from
+ *         description: Only bookings made on or after this date (YYYY-MM-DD, UTC)
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: to
+ *         description: Only bookings made on or before this date (YYYY-MM-DD, UTC). The whole day is included.
+ *         schema: { type: string, format: date }
  *     responses:
  *       200:
  *         description: One page of bookings (data is an empty array if there are none)
@@ -62,6 +73,9 @@ router.use('/api', apiRouter);
  *                 limit: { type: integer, example: 10 }
  *                 total: { type: integer, example: 12 }
  *                 totalPages: { type: integer, example: 2 }
+ *                 filters:
+ *                   type: object
+ *                   example: { ticketClass: first, from: '2026-11-01', to: '2026-11-30' }
  *                 data:
  *                   type: array
  *                   items:
@@ -98,6 +112,8 @@ router.use('/api', apiRouter);
  *                       createdAt:
  *                         type: string
  *                         format: date-time
+ *       400:
+ *         description: Invalid page, limit, ticketClass, from, or to (or from is after to)
  *       500:
  *         description: Failed to fetch bookings
  *       401:

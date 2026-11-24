@@ -48,7 +48,14 @@ describe('GET /api/bookings', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('application/json');
-    expect(response.body).toEqual({ data: [], page: 1, limit: 10, total: 0, totalPages: 0 });
+    expect(response.body).toEqual({
+      data: [],
+      page: 1,
+      limit: 10,
+      total: 0,
+      totalPages: 0,
+      filters: { ticketClass: null, from: null, to: null }
+    });
   });
 
   test('returns bookings newest first', async () => {
@@ -86,6 +93,42 @@ describe('GET /api/bookings', () => {
     const agent = await createAdminAgent();
 
     for (const query of ['page=0', 'page=abc', 'limit=0', 'limit=51']) {
+      expect((await agent.get(`/api/bookings?${query}`)).status).toBe(400);
+    }
+  });
+});
+
+describe('GET /api/bookings filters', () => {
+  const insertBookings = () => getDb().collection('bookings').insertMany([
+    { id: 'JRA', ticketClass: 'first', createdAt: new Date('2026-11-01T10:00:00Z') },
+    { id: 'JRB', ticketClass: 'standard', createdAt: new Date('2026-11-15T23:30:00Z') },
+    { id: 'JRC', ticketClass: 'first', createdAt: new Date('2026-11-20T08:00:00Z') }
+  ]);
+
+  test('filters by ticket class', async () => {
+    await insertBookings();
+    const response = await (await createAdminAgent()).get('/api/bookings?ticketClass=first');
+
+    expect(response.body.data.map((booking) => booking.id)).toEqual(['JRC', 'JRA']);
+    expect(response.body.total).toBe(2);
+    expect(response.body.filters).toEqual({ ticketClass: 'first', from: null, to: null });
+  });
+
+  test('filters by date range and includes the whole "to" day', async () => {
+    await insertBookings();
+    const agent = await createAdminAgent();
+
+    const range = await agent.get('/api/bookings?from=2026-11-02&to=2026-11-15');
+    expect(range.body.data.map((booking) => booking.id)).toEqual(['JRB']);
+
+    const combined = await agent.get('/api/bookings?ticketClass=first&from=2026-11-10');
+    expect(combined.body.data.map((booking) => booking.id)).toEqual(['JRC']);
+  });
+
+  test('returns 400 for an unknown ticket class, a bad date, or from after to', async () => {
+    const agent = await createAdminAgent();
+
+    for (const query of ['ticketClass=economy', 'from=11/01/2026', 'to=2026-02-30', 'from=2026-11-20&to=2026-11-01']) {
       expect((await agent.get(`/api/bookings?${query}`)).status).toBe(400);
     }
   });
