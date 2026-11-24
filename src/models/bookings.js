@@ -5,8 +5,13 @@ export async function createBooking(data) {
   return created.toObject();
 }
 
-export async function getAllBookings() {
-  return booking.find({}).sort({ createdAt: -1 }).lean();
+// Returns one page of bookings, newest first, plus the total number of matches.
+export async function getBookingsPage(filter, page, limit) {
+  const [bookings, total] = await Promise.all([
+    booking.find(filter).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+    booking.countDocuments(filter)
+  ]);
+  return { bookings, total };
 }
 
 export async function getBookingsByEmail(email) {

@@ -48,7 +48,7 @@ describe('GET /api/bookings', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('application/json');
-    expect(response.body).toEqual([]);
+    expect(response.body).toEqual({ data: [], page: 1, limit: 10, total: 0, totalPages: 0 });
   });
 
   test('returns bookings newest first', async () => {
@@ -60,7 +60,34 @@ describe('GET /api/bookings', () => {
     const response = await (await createAdminAgent()).get('/api/bookings');
 
     expect(response.status).toBe(200);
-    expect(response.body.map((booking) => booking.id)).toEqual(['JRNEW', 'JROLD']);
+    expect(response.body.data.map((booking) => booking.id)).toEqual(['JRNEW', 'JROLD']);
+  });
+
+  test('returns 10 bookings per page with metadata', async () => {
+    await getDb().collection('bookings').insertMany(
+      Array.from({ length: 12 }, (_, i) => ({
+        id: `JR${String(i + 1).padStart(2, '0')}`,
+        tripId: 'alpine-panorama',
+        createdAt: new Date(2026, 0, i + 1)
+      }))
+    );
+    const agent = await createAdminAgent();
+
+    const first = await agent.get('/api/bookings');
+    expect(first.body).toMatchObject({ page: 1, limit: 10, total: 12, totalPages: 2 });
+    expect(first.body.data).toHaveLength(10);
+    expect(first.body.data[0].id).toBe('JR12');
+
+    const second = await agent.get('/api/bookings?page=2');
+    expect(second.body.data.map((booking) => booking.id)).toEqual(['JR02', 'JR01']);
+  });
+
+  test('returns 400 for an invalid page or limit', async () => {
+    const agent = await createAdminAgent();
+
+    for (const query of ['page=0', 'page=abc', 'limit=0', 'limit=51']) {
+      expect((await agent.get(`/api/bookings?${query}`)).status).toBe(400);
+    }
   });
 });
 
