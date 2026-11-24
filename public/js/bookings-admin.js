@@ -13,6 +13,7 @@ const loadBookingsAdmin = async () => {
         return;
     }
 
+    const LOAD_ERROR = 'Unable to load bookings right now. Please try again in a moment.';
     let currentPage = 1;
 
     const formatLabel = (value) =>
@@ -24,14 +25,22 @@ const loadBookingsAdmin = async () => {
         errorEl.hidden = true;
 
         try {
-            const response = await fetch(`/api/bookings?page=${page}`);
-            if (!response.ok) {
-                throw new Error(`Failed to load bookings (${response.status})`);
-            }
+            // Send the page plus any filters the user picked.
+            const params = new URLSearchParams({ page });
+            const filters = {
+                ticketClass: document.getElementById('bookings-class').value,
+                from: document.getElementById('bookings-from').value,
+                to: document.getElementById('bookings-to').value
+            };
+            Object.entries(filters).forEach(([name, value]) => {
+                if (value) params.set(name, value);
+            });
 
+            const response = await fetch(`/api/bookings?${params}`);
             const result = await response.json();
-            if (!Array.isArray(result.data)) {
-                throw new Error('Bookings API returned an invalid response');
+            if (!response.ok || !Array.isArray(result.data)) {
+                // A 400 explains what is wrong with the filters, so show it to the user.
+                throw new Error(response.status === 400 ? result.error : LOAD_ERROR);
             }
             const bookings = result.data;
 
@@ -74,7 +83,9 @@ const loadBookingsAdmin = async () => {
             nextEl.disabled = currentPage >= totalPages;
         } catch (error) {
             errorEl.hidden = false;
-            errorEl.textContent = 'Unable to load bookings right now. Please try again in a moment.';
+            errorEl.textContent = error instanceof SyntaxError ? LOAD_ERROR : error.message;
+            tableEl.hidden = true;
+            emptyEl.hidden = true;
             console.error('Error loading bookings:', error);
         } finally {
             loadingEl.hidden = true;
@@ -83,6 +94,12 @@ const loadBookingsAdmin = async () => {
 
     prevEl.addEventListener('click', () => loadPage(currentPage - 1));
     nextEl.addEventListener('click', () => loadPage(currentPage + 1));
+
+    // New filters always start back on page 1.
+    document.getElementById('bookings-filters').addEventListener('submit', (event) => {
+        event.preventDefault();
+        loadPage(1);
+    });
 
     await loadPage(1);
 };

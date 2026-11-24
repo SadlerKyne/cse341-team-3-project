@@ -9,6 +9,19 @@ import {
   getBookingsPage,
 } from "../models/bookings.js";
 
+const TICKET_CLASSES = ["standard", "premium", "first"];
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+// Turns "YYYY-MM-DD" into a Date at midnight UTC, or null if it is not a real date.
+const parseDate = (value) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return null;
+  }
+  const date = new Date(`${value}T00:00:00Z`);
+  // Rejects dates like 2026-02-30 that JavaScript would roll over into March.
+  return !Number.isNaN(date.getTime()) && date.toISOString().startsWith(value) ? date : null;
+};
+
 // GET /api/bookings
 export async function getAllBookings(req, res) {
   const paging = parsePaging(req.query);
@@ -16,11 +29,46 @@ export async function getAllBookings(req, res) {
     return res.status(400).json({ error: paging.error });
   }
   const { page, limit } = paging;
+  const { ticketClass, from, to } = req.query;
+  const fromDate = from === undefined ? null : parseDate(from);
+  const toDate = to === undefined ? null : parseDate(to);
+
+  if (ticketClass !== undefined && !TICKET_CLASSES.includes(ticketClass)) {
+    return res.status(400).json({ error: "ticketClass must be standard, premium, or first" });
+  }
+  if ((from !== undefined && !fromDate) || (to !== undefined && !toDate)) {
+    return res.status(400).json({ error: "from and to must be dates in YYYY-MM-DD format" });
+  }
+  if (fromDate && toDate && fromDate > toDate) {
+    return res.status(400).json({ error: "from must be on or before to" });
+  }
+
+  const filter = {};
+  if (ticketClass) {
+    filter.ticketClass = ticketClass;
+  }
+  if (fromDate || toDate) {
+    filter.createdAt = {};
+    if (fromDate) {
+      filter.createdAt.$gte = fromDate;
+    }
+    if (toDate) {
+      // Include the whole "to" day by stopping at midnight of the next day.
+      filter.createdAt.$lt = new Date(toDate.getTime() + ONE_DAY_MS);
+    }
+  }
 
   try {
-    const { bookings, total } = await getBookingsPage({}, page, limit);
+    const { bookings, total } = await getBookingsPage(filter, page, limit);
 
-    return res.status(200).json({ data: bookings, page, limit, total, totalPages: Math.ceil(total / limit) });
+    return res.status(200).json({
+      data: bookings,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      filters: { ticketClass: ticketClass ?? null, from: from ?? null, to: to ?? null },
+    });
   } catch (error) {
     console.error("Error fetching bookings:", error);
 
