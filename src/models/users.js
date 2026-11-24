@@ -11,9 +11,18 @@ const toPublicUser = (user) => ({
   role: user.role?.name
 });
 
-export async function getAllUsers() {
-  const users = await User.find({}).populate('role').lean();
-  return users.map(toPublicUser);
+// Returns one page of users sorted by username, plus the total number of matches.
+export async function getUsersPage(filter, page, limit) {
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .populate('role')
+      .sort({ username: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(filter)
+  ]);
+  return { users: users.map(toPublicUser), total };
 }
 
 export async function getUserById(id) {

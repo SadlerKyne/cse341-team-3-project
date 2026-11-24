@@ -1,4 +1,5 @@
-import { deleteUser as removeUser, getAllUsers, getUserById, updateUser as saveUser } from '../models/users.js';
+import { parsePaging } from '../includes/pagination.js';
+import { deleteUser as removeUser, getUsersPage, updateUser as saveUser } from '../models/users.js';
 
 const isAdmin = (req) => req.user.role === 'admin';
 
@@ -12,12 +13,17 @@ export function usersAdminPage(req, res) {
 
 // GET /api/users
 export async function getUsers(req, res) {
+  const paging = parsePaging(req.query);
+  if (paging.error) {
+    return res.status(400).json({ error: paging.error });
+  }
+  const { page, limit } = paging;
+
   try {
-    if (isAdmin(req)) {
-      return res.status(200).json(await getAllUsers());
-    }
-    const user = await getUserById(req.user.id);
-    return res.status(200).json(user ? [user] : []);
+    // Admins page through everyone. Other users only see themselves.
+    const filter = isAdmin(req) ? {} : { _id: req.user.id };
+    const { users, total } = await getUsersPage(filter, page, limit);
+    return res.status(200).json({ data: users, page, limit, total, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     console.error('Error fetching users:', error);
     return res.status(500).json({ error: 'Failed to fetch users' });

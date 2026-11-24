@@ -40,14 +40,14 @@ describe('user admin', () => {
     expect((await agent.get('/users-admin')).status).toBe(200);
 
     const list = await agent.get('/api/users');
-    expect(list.body).toEqual([{
+    expect(list.body.data).toEqual([{
       id: mayaId,
       name: 'Maya',
       username: 'maya',
       email: 'maya@example.com',
       role: 'customer'
     }]);
-    expect(list.body[0]).not.toHaveProperty('passwordHash');
+    expect(list.body.data[0]).not.toHaveProperty('passwordHash');
 
     const updateSelf = await agent.put(`/api/users/${mayaId}`).send({
       name: 'Maya R',
@@ -89,7 +89,7 @@ describe('user admin', () => {
     const kenId = await createUser('Ken', 'ken', 'ken@example.com', 'customer');
     const agent = await signIn('admin@example.com');
 
-    expect((await agent.get('/api/users')).body).toHaveLength(2);
+    expect((await agent.get('/api/users')).body.data).toHaveLength(2);
 
     const update = await agent.put(`/api/users/${kenId}`).send({
       name: 'Ken',
@@ -108,5 +108,34 @@ describe('user admin', () => {
     const agent = await signIn('maya@example.com');
 
     expect((await agent.put(`/api/users/${mayaId}`).send({ name: '' })).status).toBe(400);
+  });
+});
+
+describe('user pagination', () => {
+  test('returns 10 users per page sorted by username, with metadata', async () => {
+    await createUser('Admin', 'admin', 'admin@example.com', 'admin');
+    for (let i = 1; i <= 11; i++) {
+      const username = `user${String(i).padStart(2, '0')}`;
+      await createUser(username, username, `${username}@example.com`, 'customer');
+    }
+    const agent = await signIn('admin@example.com');
+
+    const first = await agent.get('/api/users');
+    expect(first.status).toBe(200);
+    expect(first.body).toMatchObject({ page: 1, limit: 10, total: 12, totalPages: 2 });
+    expect(first.body.data).toHaveLength(10);
+    expect(first.body.data[0].username).toBe('admin');
+
+    const second = await agent.get('/api/users?page=2');
+    expect(second.body.data.map((user) => user.username)).toEqual(['user10', 'user11']);
+  });
+
+  test('returns 400 for an invalid page or limit', async () => {
+    await createUser('Admin', 'admin', 'admin@example.com', 'admin');
+    const agent = await signIn('admin@example.com');
+
+    for (const query of ['page=0', 'page=abc', 'limit=0', 'limit=51']) {
+      expect((await agent.get(`/api/users?${query}`)).status).toBe(400);
+    }
   });
 });
