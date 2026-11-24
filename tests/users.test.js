@@ -139,3 +139,32 @@ describe('user pagination', () => {
     }
   });
 });
+
+describe('user search and role filter', () => {
+  test('filters by role and searches name, username, and email', async () => {
+    await createUser('Admin', 'admin', 'admin@example.com', 'admin');
+    await createUser('Ken Sato', 'ksato', 'ken@example.com', 'customer');
+    await createUser('Maya', 'maya', 'maya@kenmail.com', 'customer');
+    await createUser('Jo', 'jo', 'jo@example.com', 'customer');
+    const agent = await signIn('admin@example.com');
+
+    const admins = await agent.get('/api/users?role=admin');
+    expect(admins.body.data.map((user) => user.username)).toEqual(['admin']);
+    expect(admins.body.total).toBe(1);
+
+    const search = await agent.get('/api/users?q=KEN');
+    expect(search.body.data.map((user) => user.username)).toEqual(['ksato', 'maya']);
+    expect(search.body.filters).toEqual({ role: null, q: 'KEN' });
+
+    const both = await agent.get('/api/users?role=customer&q=jo');
+    expect(both.body.data.map((user) => user.username)).toEqual(['jo']);
+  });
+
+  test('treats q as plain text and rejects an unknown role', async () => {
+    await createUser('Admin', 'admin', 'admin@example.com', 'admin');
+    const agent = await signIn('admin@example.com');
+
+    expect((await agent.get('/api/users?q=.*')).body.total).toBe(0);
+    expect((await agent.get('/api/users?role=owner')).status).toBe(400);
+  });
+});

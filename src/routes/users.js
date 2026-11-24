@@ -17,6 +17,13 @@ const router = Router();
  *       - in: query
  *         name: limit
  *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+ *       - in: query
+ *         name: role
+ *         schema: { type: string, enum: [customer, admin] }
+ *       - in: query
+ *         name: q
+ *         description: Case-insensitive keyword matched against display name, username, or email
+ *         schema: { type: string }
  *     responses:
  *       200:
  *         description: One page of users (id, name, username, email, role). Password hashes are never returned.
@@ -28,8 +35,9 @@ const router = Router();
  *               limit: 10
  *               total: 1
  *               totalPages: 1
+ *               filters: { role: customer, q: maya }
  *       400:
- *         description: Invalid page or limit
+ *         description: Invalid page, limit, role, or q
  *       401:
  *         description: Authentication required
  * /api/users/{id}:

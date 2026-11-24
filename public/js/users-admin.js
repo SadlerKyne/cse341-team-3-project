@@ -109,7 +109,14 @@ const loadUsersAdmin = async () => {
     // Fetches one page of users from the API and updates the table and pager.
     const loadPage = async (page) => {
         try {
-            const response = await fetch(`/api/users?page=${page}`);
+            // Send the page plus any filters the user picked.
+            const params = new URLSearchParams({ page });
+            const role = document.getElementById('users-role').value;
+            const q = document.getElementById('users-q').value.trim();
+            if (role) params.set('role', role);
+            if (q) params.set('q', q);
+
+            const response = await fetch(`/api/users?${params}`);
             if (!response.ok) {
                 throw new Error(`Failed to load users (${response.status})`);
             }
@@ -140,6 +147,12 @@ const loadUsersAdmin = async () => {
 
     prevEl.addEventListener('click', () => loadPage(currentPage - 1));
     nextEl.addEventListener('click', () => loadPage(currentPage + 1));
+
+    // A new search always starts back on page 1.
+    document.getElementById('users-filters').addEventListener('submit', (event) => {
+        event.preventDefault();
+        loadPage(1);
+    });
 
     await loadPage(1);
 };

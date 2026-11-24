@@ -18,12 +18,27 @@ export async function getUsers(req, res) {
     return res.status(400).json({ error: paging.error });
   }
   const { page, limit } = paging;
+  const { role, q } = req.query;
+
+  if (role !== undefined && !['customer', 'admin'].includes(role)) {
+    return res.status(400).json({ error: 'role must be customer or admin' });
+  }
+  if (q !== undefined && typeof q !== 'string') {
+    return res.status(400).json({ error: 'q must be a single search term' });
+  }
 
   try {
     // Admins page through everyone. Other users only see themselves.
-    const filter = isAdmin(req) ? {} : { _id: req.user.id };
-    const { users, total } = await getUsersPage(filter, page, limit);
-    return res.status(200).json({ data: users, page, limit, total, totalPages: Math.ceil(total / limit) });
+    const id = isAdmin(req) ? undefined : req.user.id;
+    const { users, total } = await getUsersPage({ id, role, q: q?.trim() }, page, limit);
+    return res.status(200).json({
+      data: users,
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      filters: { role: role ?? null, q: q?.trim() || null }
+    });
   } catch (error) {
     console.error('Error fetching users:', error);
     return res.status(500).json({ error: 'Failed to fetch users' });
