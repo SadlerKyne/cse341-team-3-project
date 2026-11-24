@@ -8,11 +8,36 @@ const router = Router();
  * @swagger
  * /api/users:
  *   get:
- *     summary: Admins get all users; other users get only themselves
+ *     summary: Get one page of users, sorted by username. Admins get all users; other users get only themselves
  *     tags: [Users]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+ *       - in: query
+ *         name: role
+ *         schema: { type: string, enum: [customer, admin] }
+ *       - in: query
+ *         name: q
+ *         description: Case-insensitive keyword matched against display name, username, or email
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: A list of users (id, name, username, email, role). Password hashes are never returned.
+ *         description: One page of users (id, name, username, email, role). Password hashes are never returned.
+ *         content:
+ *           application/json:
+ *             example:
+ *               data: [{ id: '665f1c...', name: Maya, username: maya, email: maya@example.com, role: customer }]
+ *               page: 1
+ *               limit: 10
+ *               total: 1
+ *               totalPages: 1
+ *               filters: { role: customer, q: maya }
+ *       400:
+ *         description: Invalid page, limit, role, or q
  *       401:
  *         description: Authentication required
  * /api/users/{id}:

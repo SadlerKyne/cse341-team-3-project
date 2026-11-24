@@ -2,6 +2,18 @@
 
 <section class="bookings-admin" id="users-admin" data-current-user-id="<%= user.id %>" data-is-admin="<%= user.role === 'admin' %>">
     <h1><%= title %></h1>
+    <form id="users-filters">
+        <label for="users-role">Role</label>
+        <select id="users-role">
+            <option value="">All</option>
+            <option value="customer">Customer</option>
+            <option value="admin">Admin</option>
+        </select>
+        <label for="users-q">Search</label>
+        <input type="search" id="users-q" placeholder="Name, username, or email">
+        <button type="submit">Search</button>
+    </form>
+
     <p id="users-message">Loading users...</p>
 
     <table class="bookings-table">
@@ -16,6 +28,12 @@
         </thead>
         <tbody id="users-list"></tbody>
     </table>
+
+    <div class="pager">
+        <button type="button" id="users-prev">Previous</button>
+        <span id="users-page"></span>
+        <button type="button" id="users-next">Next</button>
+    </div>
 </section>
 
 <script src="/js/users-admin.js"></script>

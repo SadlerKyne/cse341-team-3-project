@@ -11,9 +11,36 @@ const toPublicUser = (user) => ({
   role: user.role?.name
 });
 
-export async function getAllUsers() {
-  const users = await User.find({}).populate('role').lean();
-  return users.map(toPublicUser);
+// Builds the MongoDB filter for the user list.
+// q is escaped so characters like . or * are searched as plain text.
+async function buildUserFilter({ id, role, q }) {
+  const filter = {};
+  if (id) {
+    filter._id = id;
+  }
+  if (role) {
+    filter.role = (await Role.findOne({ name: role }))?._id ?? null;
+  }
+  if (q) {
+    const pattern = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+    filter.$or = [{ name: pattern }, { username: pattern }, { email: pattern }];
+  }
+  return filter;
+}
+
+// Returns one page of users sorted by username, plus the total number of matches.
+export async function getUsersPage(criteria, page, limit) {
+  const filter = await buildUserFilter(criteria);
+  const [users, total] = await Promise.all([
+    User.find(filter)
+      .populate('role')
+      .sort({ username: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(filter)
+  ]);
+  return { users: users.map(toPublicUser), total };
 }
 
 export async function getUserById(id) {
