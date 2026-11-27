@@ -18,6 +18,11 @@
     <div class="trips-state trips-error" id="trips-error" hidden></div>
     <div class="trips-state" id="trips-empty" hidden>No trips match your filters.</div>
     <div class="routes-grid" id="trips-list"></div>
+    <nav class="trips-pagination" id="trips-pagination" aria-label="Trip list pages" hidden>
+        <button type="button" id="trips-previous" aria-label="Previous page">Previous</button>
+        <span id="trips-page-status" aria-live="polite"></span>
+        <button type="button" id="trips-next" aria-label="Next page">Next</button>
+    </nav>
 
     <template id="trip-card-template">
         <article class="route-card">

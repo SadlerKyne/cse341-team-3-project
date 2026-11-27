@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getDb } from '../db/connect.js';
 import { getSchedulesForTrip, getSchedulesForTripAndMonth } from '../controllers/schedules.js';
+import { parsePaging } from '../includes/pagination.js';
 
 const router = Router();
 
@@ -8,24 +9,94 @@ const router = Router();
  * @swagger
  * /api/trips:
  *   get:
- *     summary: Get all trips
+ *     summary: Get one page of trips, optionally filtered by region and season
  *     tags: [Trips]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 50, default: 10 }
+ *       - in: query
+ *         name: region
+ *         schema: { type: string }
+ *       - in: query
+ *         name: season
+ *         description: Matches the trip's bestSeason field
+ *         schema: { type: string }
  *     responses:
  *       200:
- *         description: A list of trips
+ *         description: One page of trips, along with paging metadata and filter options
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Trip'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Trip'
+ *                 page: { type: integer, example: 1 }
+ *                 limit: { type: integer, example: 10 }
+ *                 total: { type: integer, example: 12 }
+ *                 totalPages: { type: integer, example: 2 }
+ *                 filters:
+ *                   type: object
+ *                   example: { region: central, season: autumn }
+ *                 filterOptions:
+ *                   type: object
+ *                   properties:
+ *                     regions: { type: array, items: { type: string } }
+ *                     seasons: { type: array, items: { type: string } }
+ *       400:
+ *         description: Invalid page, limit, region, or season
  *       500:
  *         description: Failed to fetch trips
  */
 router.get('/trips', async (req, res, next) => {
+    const paging = parsePaging(req.query);
+    if (paging.error) {
+        return res.status(400).json({ error: paging.error });
+    }
+
+    const { page, limit } = paging;
+    const { region, season } = req.query;
+    for (const [name, value] of [['region', region], ['season', season]]) {
+        if (value !== undefined && (typeof value !== 'string' || !value.trim() || value.length > 100)) {
+            return res.status(400).json({ error: `${name} must be a non-empty string of at most 100 characters` });
+        }
+    }
+
+    const filter = {};
+    if (region !== undefined) {
+        filter.region = region.trim();
+    }
+    if (season !== undefined) {
+        filter.bestSeason = season.trim();
+    }
+
     try {
-        const trips = await getDb().collection('trips').find({}).toArray();
-        return res.json(trips);
+        const tripsCollection = getDb().collection('trips');
+        const [trips, total, regions, seasons] = await Promise.all([
+            tripsCollection.find(filter).sort({ name: 1, id: 1 })
+                .skip((page - 1) * limit).limit(limit).toArray(),
+            tripsCollection.countDocuments(filter),
+            tripsCollection.distinct('region'),
+            tripsCollection.distinct('bestSeason')
+        ]);
+        return res.json({
+            data: trips,
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+            filters: { region: region ?? null, season: season ?? null },
+            filterOptions: {
+                regions: regions.filter((value) => typeof value === 'string').sort(),
+                seasons: seasons.filter((value) => typeof value === 'string').sort()
+            }
+        });
     } catch (error) {
         return next(error);
     }
