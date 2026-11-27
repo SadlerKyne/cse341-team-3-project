@@ -4,33 +4,14 @@ const hookTripsCatalog = async () => {
     const loadingEl = document.getElementById('trips-loading');
     const errorEl = document.getElementById('trips-error');
     const emptyEl = document.getElementById('trips-empty');
-    const regionSelect = document.getElementById('region-filter');
-    const seasonSelect = document.getElementById('season-filter');
-<<<<<<< HEAD
-    const keywordInput = document.getElementById('trip-search');
-=======
->>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
     const paginationEl = document.getElementById('trips-pagination');
     const previousButton = document.getElementById('trips-previous');
     const nextButton = document.getElementById('trips-next');
     const pageStatus = document.getElementById('trips-page-status');
-
-<<<<<<< HEAD
-    if (!listEl || !templateEl || !regionSelect || !seasonSelect || !keywordInput ||
-=======
-    if (!listEl || !templateEl || !regionSelect || !seasonSelect ||
->>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
-        !paginationEl || !previousButton || !nextButton || !pageStatus) {
+    if (!listEl || !templateEl || !paginationEl || !previousButton ||
+        !nextButton || !pageStatus) {
         return;
     }
-
-    const formatLabel = (value) => value.charAt(0).toUpperCase() + value.slice(1);
-    const populateFilter = (select, values, defaultLabel, selectedValue) => {
-        const options = [new Option(defaultLabel, 'all')];
-        values.forEach((value) => options.push(new Option(formatLabel(value), value)));
-        select.replaceChildren(...options);
-        select.value = values.includes(selectedValue) ? selectedValue : 'all';
-    };
 
     const renderTrips = (trips) => {
         const fragment = document.createDocumentFragment();
@@ -84,34 +65,13 @@ const hookTripsCatalog = async () => {
     const initialUrl = new URL(window.location.href);
     const requestedPage = Number(initialUrl.searchParams.get('page'));
     let page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-    let hasLoadedFilterOptions = false;
-    let requestedRegion = initialUrl.searchParams.get('region');
-    let requestedSeason = initialUrl.searchParams.get('season');
-<<<<<<< HEAD
-    keywordInput.value = initialUrl.searchParams.get('q') ?? '';
-=======
->>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
     let activeRequest;
 
     const updateUrl = () => {
         const currentUrl = new URL(window.location.href);
-        for (const [parameter, value] of [
-            ['region', regionSelect.value],
-<<<<<<< HEAD
-            ['season', seasonSelect.value],
-            ['q', keywordInput.value.trim()]
-        ]) {
-            if (value === 'all' || !value) {
-=======
-            ['season', seasonSelect.value]
-        ]) {
-            if (value === 'all') {
->>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
-                currentUrl.searchParams.delete(parameter);
-            } else {
-                currentUrl.searchParams.set(parameter, value);
-            }
-        }
+        currentUrl.searchParams.delete('region');
+        currentUrl.searchParams.delete('season');
+        currentUrl.searchParams.delete('q');
 
         if (page === 1) {
             currentUrl.searchParams.delete('page');
@@ -129,21 +89,6 @@ const hookTripsCatalog = async () => {
         const request = new AbortController();
         activeRequest = request;
         const query = new URLSearchParams({ page: String(page), limit: '10' });
-        const selectedRegion = hasLoadedFilterOptions ? regionSelect.value : requestedRegion;
-        const selectedSeason = hasLoadedFilterOptions ? seasonSelect.value : requestedSeason;
-        if (selectedRegion && selectedRegion !== 'all') {
-            query.set('region', selectedRegion);
-        }
-        if (selectedSeason && selectedSeason !== 'all') {
-            query.set('season', selectedSeason);
-        }
-<<<<<<< HEAD
-        const keyword = keywordInput.value.trim();
-        if (keyword) {
-            query.set('q', keyword);
-        }
-=======
->>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
 
         loadingEl.hidden = false;
         errorEl.hidden = true;
@@ -156,26 +101,8 @@ const hookTripsCatalog = async () => {
 
             const result = await response.json();
             if (!result || !Array.isArray(result.data) ||
-                !Number.isInteger(result.page) || !Number.isInteger(result.totalPages) ||
-                !result.filterOptions || !Array.isArray(result.filterOptions.regions) ||
-                !Array.isArray(result.filterOptions.seasons)) {
+                !Number.isInteger(result.page) || !Number.isInteger(result.totalPages)) {
                 throw new Error('Trip API returned an invalid response');
-            }
-
-            if (!hasLoadedFilterOptions) {
-                const validRegion = result.filterOptions.regions.includes(requestedRegion);
-                const validSeason = result.filterOptions.seasons.includes(requestedSeason);
-                populateFilter(regionSelect, result.filterOptions.regions, 'All Regions', requestedRegion);
-                populateFilter(seasonSelect, result.filterOptions.seasons, 'Any Season', requestedSeason);
-                hasLoadedFilterOptions = true;
-                requestedRegion = null;
-                requestedSeason = null;
-                if ((!validRegion && initialUrl.searchParams.has('region')) ||
-                    (!validSeason && initialUrl.searchParams.has('season'))) {
-                    page = 1;
-                    loadTrips();
-                    return;
-                }
             }
 
             page = result.page;
@@ -201,18 +128,6 @@ const hookTripsCatalog = async () => {
         }
     };
 
-    const applyFilters = () => {
-        page = 1;
-        updateUrl();
-        loadTrips();
-    };
-
-    regionSelect.addEventListener('change', applyFilters);
-    seasonSelect.addEventListener('change', applyFilters);
-<<<<<<< HEAD
-    keywordInput.addEventListener('input', applyFilters);
-=======
->>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
     previousButton.addEventListener('click', () => {
         if (page > 1) {
             page -= 1;
