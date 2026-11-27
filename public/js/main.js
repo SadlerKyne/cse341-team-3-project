@@ -6,12 +6,13 @@ const hookTripsCatalog = async () => {
     const emptyEl = document.getElementById('trips-empty');
     const regionSelect = document.getElementById('region-filter');
     const seasonSelect = document.getElementById('season-filter');
+    const keywordInput = document.getElementById('trip-search');
     const paginationEl = document.getElementById('trips-pagination');
     const previousButton = document.getElementById('trips-previous');
     const nextButton = document.getElementById('trips-next');
     const pageStatus = document.getElementById('trips-page-status');
 
-    if (!listEl || !templateEl || !regionSelect || !seasonSelect ||
+    if (!listEl || !templateEl || !regionSelect || !seasonSelect || !keywordInput ||
         !paginationEl || !previousButton || !nextButton || !pageStatus) {
         return;
     }
@@ -79,15 +80,17 @@ const hookTripsCatalog = async () => {
     let hasLoadedFilterOptions = false;
     let requestedRegion = initialUrl.searchParams.get('region');
     let requestedSeason = initialUrl.searchParams.get('season');
+    keywordInput.value = initialUrl.searchParams.get('q') ?? '';
     let activeRequest;
 
     const updateUrl = () => {
         const currentUrl = new URL(window.location.href);
         for (const [parameter, value] of [
             ['region', regionSelect.value],
-            ['season', seasonSelect.value]
+            ['season', seasonSelect.value],
+            ['q', keywordInput.value.trim()]
         ]) {
-            if (value === 'all') {
+            if (value === 'all' || !value) {
                 currentUrl.searchParams.delete(parameter);
             } else {
                 currentUrl.searchParams.set(parameter, value);
@@ -117,6 +120,10 @@ const hookTripsCatalog = async () => {
         }
         if (selectedSeason && selectedSeason !== 'all') {
             query.set('season', selectedSeason);
+        }
+        const keyword = keywordInput.value.trim();
+        if (keyword) {
+            query.set('q', keyword);
         }
 
         loadingEl.hidden = false;
@@ -183,6 +190,7 @@ const hookTripsCatalog = async () => {
 
     regionSelect.addEventListener('change', applyFilters);
     seasonSelect.addEventListener('change', applyFilters);
+    keywordInput.addEventListener('input', applyFilters);
     previousButton.addEventListener('click', () => {
         if (page > 1) {
             page -= 1;

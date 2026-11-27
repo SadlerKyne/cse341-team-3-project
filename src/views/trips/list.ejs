@@ -2,15 +2,18 @@
 <h1><%- title %></h1>
 
 <div id="filters">
-    Search by Region:
+    <label for="region-filter">Search by Region:</label>
     <select id="region-filter">
         <option value="all">All Regions</option>
     </select>
 
-    Search by Season:
+    <label for="season-filter">Search by Season:</label>
     <select id="season-filter">
         <option value="all">Any Season</option>
     </select>
+
+    <label for="trip-search">Search trips:</label>
+    <input id="trip-search" type="search" maxlength="100" placeholder="Name or description">
 </div>
 
 <section class="trips-catalog">
