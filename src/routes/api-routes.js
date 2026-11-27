@@ -9,7 +9,7 @@ const router = Router();
  * @swagger
  * /api/trips:
  *   get:
- *     summary: Get one page of trips, optionally filtered by region, season, and keyword
+ *     summary: Get one page of trips, optionally filtered by region and season
  *     tags: [Trips]
  *     parameters:
  *       - in: query
@@ -25,10 +25,6 @@ const router = Router();
  *         name: season
  *         description: Matches the trip's bestSeason field
  *         schema: { type: string }
- *       - in: query
- *         name: q
- *         description: Case-insensitive keyword search in trip names and descriptions
- *         schema: { type: string, maxLength: 100 }
  *     responses:
  *       200:
  *         description: One page of trips, along with paging metadata and filter options
@@ -47,14 +43,14 @@ const router = Router();
  *                 totalPages: { type: integer, example: 2 }
  *                 filters:
  *                   type: object
- *                   example: { region: central, season: autumn, q: alpine }
+ *                   example: { region: central, season: autumn }
  *                 filterOptions:
  *                   type: object
  *                   properties:
  *                     regions: { type: array, items: { type: string } }
  *                     seasons: { type: array, items: { type: string } }
  *       400:
- *         description: Invalid page, limit, region, season, or q
+ *         description: Invalid page, limit, region, or season
  *       500:
  *         description: Failed to fetch trips
  */
@@ -65,8 +61,8 @@ router.get('/trips', async (req, res, next) => {
     }
 
     const { page, limit } = paging;
-    const { region, season, q } = req.query;
-    for (const [name, value] of [['region', region], ['season', season], ['q', q]]) {
+    const { region, season } = req.query;
+    for (const [name, value] of [['region', region], ['season', season]]) {
         if (value !== undefined && (typeof value !== 'string' || !value.trim() || value.length > 100)) {
             return res.status(400).json({ error: `${name} must be a non-empty string of at most 100 characters` });
         }
@@ -78,13 +74,6 @@ router.get('/trips', async (req, res, next) => {
     }
     if (season !== undefined) {
         filter.bestSeason = season.trim();
-    }
-    if (q !== undefined) {
-        const keyword = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        filter.$or = [
-            { name: { $regex: keyword, $options: 'i' } },
-            { description: { $regex: keyword, $options: 'i' } }
-        ];
     }
 
     try {
@@ -102,7 +91,7 @@ router.get('/trips', async (req, res, next) => {
             limit,
             total,
             totalPages: Math.ceil(total / limit),
-            filters: { region: region ?? null, season: season ?? null, q: q ?? null },
+            filters: { region: region ?? null, season: season ?? null },
             filterOptions: {
                 regions: regions.filter((value) => typeof value === 'string').sort(),
                 seasons: seasons.filter((value) => typeof value === 'string').sort()

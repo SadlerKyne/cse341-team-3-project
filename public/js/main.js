@@ -6,13 +6,20 @@ const hookTripsCatalog = async () => {
     const emptyEl = document.getElementById('trips-empty');
     const regionSelect = document.getElementById('region-filter');
     const seasonSelect = document.getElementById('season-filter');
+<<<<<<< HEAD
     const keywordInput = document.getElementById('trip-search');
+=======
+>>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
     const paginationEl = document.getElementById('trips-pagination');
     const previousButton = document.getElementById('trips-previous');
     const nextButton = document.getElementById('trips-next');
     const pageStatus = document.getElementById('trips-page-status');
 
+<<<<<<< HEAD
     if (!listEl || !templateEl || !regionSelect || !seasonSelect || !keywordInput ||
+=======
+    if (!listEl || !templateEl || !regionSelect || !seasonSelect ||
+>>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
         !paginationEl || !previousButton || !nextButton || !pageStatus) {
         return;
     }
@@ -80,17 +87,26 @@ const hookTripsCatalog = async () => {
     let hasLoadedFilterOptions = false;
     let requestedRegion = initialUrl.searchParams.get('region');
     let requestedSeason = initialUrl.searchParams.get('season');
+<<<<<<< HEAD
     keywordInput.value = initialUrl.searchParams.get('q') ?? '';
+=======
+>>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
     let activeRequest;
 
     const updateUrl = () => {
         const currentUrl = new URL(window.location.href);
         for (const [parameter, value] of [
             ['region', regionSelect.value],
+<<<<<<< HEAD
             ['season', seasonSelect.value],
             ['q', keywordInput.value.trim()]
         ]) {
             if (value === 'all' || !value) {
+=======
+            ['season', seasonSelect.value]
+        ]) {
+            if (value === 'all') {
+>>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
                 currentUrl.searchParams.delete(parameter);
             } else {
                 currentUrl.searchParams.set(parameter, value);
@@ -121,10 +137,13 @@ const hookTripsCatalog = async () => {
         if (selectedSeason && selectedSeason !== 'all') {
             query.set('season', selectedSeason);
         }
+<<<<<<< HEAD
         const keyword = keywordInput.value.trim();
         if (keyword) {
             query.set('q', keyword);
         }
+=======
+>>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
 
         loadingEl.hidden = false;
         errorEl.hidden = true;
@@ -190,7 +209,10 @@ const hookTripsCatalog = async () => {
 
     regionSelect.addEventListener('change', applyFilters);
     seasonSelect.addEventListener('change', applyFilters);
+<<<<<<< HEAD
     keywordInput.addEventListener('input', applyFilters);
+=======
+>>>>>>> 61d52fb (week 5 Feature Set 1: Trip List)
     previousButton.addEventListener('click', () => {
         if (page > 1) {
             page -= 1;
